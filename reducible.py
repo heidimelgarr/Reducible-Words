@@ -158,36 +158,28 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    # checking size
-    if s in hash_table:
-        index = hash_table.index(s)
-        if index < len(hash_memo):
-            hash_memo[index] = s
 
     # base case
     if len(s) == 1 and s in {"a", "i", "o"}:
-        index = hash_table.index(s)
-        hash_memo[index] = s
+        insert_word(s, hash_memo)
         return True
 
-    # already in hash_memo
-    if s in hash_memo:
+    # already in memo
+    if find_word(s, hash_memo):
         return True
 
-    # all possible single-letter removals
+    # if not, can't be reducible
+    if not find_word(s, hash_table):
+        return False
+
+    # removing one letter at a time
     for i in range(len(s)):
-        less_s = s[:i] + s[i+1:]
-
-        # Check if still a valid word
-        if less_s in hash_table and is_reducible(less_s, hash_table, hash_memo):
-            # Mark s as reducible and store it
-            index = hash_table.index(s)
-            hash_memo[index] = s
+        shorter = s[:i] + s[i+1:]
+        if find_word(shorter, hash_table) and is_reducible(shorter, hash_table, hash_memo):
+            insert_word(s, hash_memo)
             return True
 
-    # Word is not reducible
     return False
-
 
 
 # TO DO
@@ -222,17 +214,17 @@ def main():
     # ensure each word has no trailing white space.
     word_list = []
     for line in sys.stdin:
-        line = line.strip()  # Remove any trailing whitespace
-        if line:
-            word_list.append(line)
+        word = line.strip()  # Remove any trailing whitespace
+        if word:
+            word_list.append(word)
 
     # find length of word_list
+    list_len = len(word_list)
     # determine prime number N that is greater than twice
+    n = 2 * list_len
     # the length of the word_list
-    guess = 2 * len(word_list)
-    while not is_prime(guess):
-        guess += 1
-    n = guess # prime
+    while not is_prime(n):
+        n += 1
 
     # create an empty hash_list
     # populate the hash_list with N blank strings
@@ -248,10 +240,9 @@ def main():
     # then M is a prime number that is slightly greater than
     # 0.2 * size of word_list
     m = int(0.2 * len(word_list)) + 1
-
-    while is_prime(m) is False:
+    while not is_prime(m):
         m += 1
-    hash_memo = [None] * m
+    hash_memo = [""] * m
 
     # populate the hash_memo with M blank strings
     reducible_words = []
