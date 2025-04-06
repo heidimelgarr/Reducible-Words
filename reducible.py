@@ -64,20 +64,16 @@ def step_size(s):
     """
     length = len(s)
 
-    # if str is short
-    short_str = length <= 3
-
-    # if len is divisible by 3
-    divi_3 = length % 3 == 0
-
-    # step size
-    if short_str:
+    # If the str length is less than or equal to 3
+    if length <= 3:
         return 2
-    elif divi_3:
-        return 3
-    else:
-        return 1
 
+    # If the str length is divisible by 3
+    if length % 3 == 0:
+        return 3
+
+    # Default case
+    return 1
 
 
 # TO DO
@@ -92,15 +88,14 @@ def insert_word(s, hash_table):
     """
     # size of table
     size = len(hash_table)
-
-    # starting index
     index = hash_word(s, size)
+    step = step_size(s)
 
     # check empty spot or already there
     while hash_table[index] != "":
         if hash_table[index] == s:
             return
-        index = (index + 1) % size
+        index = (index + step) % size
     hash_table[index] = s
 
 
@@ -117,27 +112,20 @@ def find_word(s, hash_table):
     size = len(hash_table)
 
     # starting index
-    index_hash = hash_word(s, size)
-    curr_index = index_hash
+    index = hash_word(s, size)
+    step = step_size(s)
+    og_index = index
 
-    search = True
-
-    # keep searching
-    while search:
-        curr_word = hash_table[curr_index]
-
-        if curr_word == "":
-            return False
-        elif curr_word == s:
+    while hash_table[index] != "":
+        if hash_table[index] == s:
             return True
-        else:
-            curr_index = (curr_index + 1) % size
+        index = (index + step) % size
 
-            # stop when done
-            if curr_index == index_hash:
-                search = False
+        # Check if we've looped back to the og index
+        if index == og_index:
+            return False
+
     return False
-
 
 
 # TO DO
@@ -151,26 +139,17 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    # check
-    if s in hash_memo:
-        return hash_memo[s]
+    m = len(hash_memo)  # Size of the memo table
+    index = hash(s) % m
 
-    words = ["a", "i", "o"]
-    if s in words:
-        hash_memo[s] = True
+    if hash_table[index] != "":
+        pass
+
+    if hash_memo[index] == "":  # If word hasn't been processed
+        hash_memo[index] = s
         return True
 
-   # check every possible reduced word
-    for i in range(len(s)):
-        reduced_word = s[:i] + s[i+1:]
-
-        if find_word(reduced_word, hash_table):
-            if is_reducible(reduced_word, hash_table, hash_memo):
-                hash_memo[s] = True
-                return True
-    hash_memo[s] = False
-    return False
-
+    return False  # Word already processed
 
 # TO DO
 def get_longest_words(string_list):
@@ -183,8 +162,7 @@ def get_longest_words(string_list):
     # Find the longest length
     max_length = 0
     for word in string_list:
-        if len(word) > max_length:
-            max_length = len(word)
+        max_length = max(max_length, len(word))
 
     # Collect all words with that length
     longest_words = []
@@ -205,10 +183,12 @@ def main():
     # ensure each word has no trailing white space.
     word_list = []
     line = input().strip()
-
-    while line != "":
-        word_list.append(line)
-        line = input().strip()
+    while line != '':
+        print(line)
+        try:
+            line = input().strip()
+        except EOFError:
+            break
 
     # find length of word_list
     # determine prime number N that is greater than twice
@@ -263,10 +243,7 @@ def main():
     # one word per line
     ordered_words = []
     while longest_words:
-        smallest_word = longest_words[0]
-        for word in longest_words:
-            if word < smallest_word:
-                smallest_word = word
+        smallest_word = min(longest_words)
         ordered_words.append(smallest_word)
         longest_words.remove(smallest_word)
 
