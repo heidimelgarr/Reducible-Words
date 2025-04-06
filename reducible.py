@@ -14,6 +14,7 @@ Students. Academic penalties up to and including an F in the course are likely.
 
 UT EID 1: he3839
 """
+import sys
 
 # the constant used to calculate the step size
 STEP_SIZE_CONSTANT = 3
@@ -96,6 +97,8 @@ def insert_word(s, hash_table):
         if hash_table[index] == s:
             return
         index = (index + step) % size
+        if hash_table[index] == "":  # If an empty spot is found stop searching
+            break
     hash_table[index] = s
 
 
@@ -121,9 +124,8 @@ def find_word(s, hash_table):
             return True
         index = (index + step) % size
 
-        # Check if we've looped back to the og index
-        if index == og_index:
-            return False
+        if index == og_index:  # If we've looped back to the og
+            break
 
     return False
 
@@ -193,14 +195,10 @@ def main():
     # should be a single word. Append to word_list
     # ensure each word has no trailing white space.
     word_list = []
-    try:
-        line = input().strip()
-        while line:
-            print(line)
+    for line in sys.stdin:
+        line = line.strip()  # Remove any trailing whitespace
+        if line:
             word_list.append(line)
-            line = input().strip()
-    except EOFError:
-        pass
 
     # find length of word_list
     # determine prime number N that is greater than twice
@@ -214,10 +212,7 @@ def main():
     # populate the hash_list with N blank strings
     # hash each word in word_list into hash_list
     # for collisions use double hashing
-    hash_list = []
-    for _ in range(n):
-        hash_list.append("")
-
+    hash_list = [""] * n
     for word in word_list:
         insert_word(word, hash_list)
 
@@ -230,11 +225,13 @@ def main():
 
     while is_prime(m) is False:
         m += 1
+    hash_memo = [None] * m
 
     # populate the hash_memo with M blank strings
-    hash_memo = []
-    for _ in range(m):
-        hash_memo.append("")
+    reducible_words = []
+    for word in word_list:
+        if is_reducible(word, hash_list, hash_memo):
+            reducible_words.append(word)
 
     # create an empty list reducible_words
      # for each word in the word_list recursively determine
@@ -244,20 +241,11 @@ def main():
     # then the word is reducible and you do not have to test
     # any further. add the word to the hash_memo.
 
-    reducible_words = []
-    for word in word_list:
-        if is_reducible(word, hash_list, hash_memo):
-            reducible_words.append(word)
-
     # find the largest reducible words in reducible_words
     longest_words = get_longest_words(reducible_words)
     # print the reducible words in alphabetical order
     # one word per line
-    ordered_words = []
-    while longest_words:
-        smallest_word = min(longest_words)
-        ordered_words.append(smallest_word)
-        longest_words.remove(smallest_word)
+    ordered_words = sorted(longest_words)
 
     for word in ordered_words:
         print(word)
