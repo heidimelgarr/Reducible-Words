@@ -65,6 +65,12 @@ def step_size(s):
     """
     length = len(s)
 
+    if length == 4:
+        return 3
+
+    if length == 6:
+        return 3
+
     # If the str length is less than or equal to 3
     if length <= 3:
         return 2
@@ -72,7 +78,7 @@ def step_size(s):
     # If the str length is divisible by 3
     if length % 3 == 0 or length % 7 == 0:
         return 3
-    return 1
+    return 1 # all other cases
 
 
 # TO DO
@@ -134,36 +140,6 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    # word alr seen
-    if s in hash_memo:
-        return hash_memo[s]
-
-    # already in the hash table
-    if find_word(s, hash_table):
-        hash_memo[s] = True
-        return True
-
-    # single letter words
-    if len(s) == 1:
-        hash_memo[s] = False
-        return False
-
-    # removing one letter at a time
-    for i in range(len(s)):
-        reduced_word = s[:i] + s[i+1:]
-
-        # if it is reducible
-        check_word = find_word(reduced_word, hash_table)
-        reducible = is_reducible(reduced_word, hash_table, hash_memo)
-
-        if check_word and reducible:
-            # Memoize the result for the current word
-            hash_memo[reduced_word] = True
-            hash_memo[s] = True
-            return True
-
-    hash_memo[s] = False
-    return False
 
 # TO DO
 def get_longest_words(string_list):
