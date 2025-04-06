@@ -63,19 +63,12 @@ def step_size(s):
     pre: s is a lowercase string.
     post: Returns the calculated step size as an integer based on the provided string.
     """
-    length = len(s)
+    hash_updated = hash_word(s, STEP_SIZE_CONSTANT)
+    step = STEP_SIZE_CONSTANT - (hash_updated % STEP_SIZE_CONSTANT)
 
-    if length == 4 or length == 6 or length == 7:
-        return 3
-
-    # If the str length is less than or equal to 3
-    if length == 3:
-        return 2
-
-    # If the str length is divisible by 3
-    if length % 3 == 0 or length % 7 == 0:
-        return 3
-    return 1 # all other cases
+    if step == 0:
+        return 1
+    return step
 
 
 # TO DO
@@ -88,18 +81,34 @@ def insert_word(s, hash_table):
     post: Inserts s into hash_table at the correct index; resolves any collisions
           by double hashing.
     """
-    first_index = hash(s) % len(hash_table)
+    # variables
+    table_size = len(hash_table)
+    index = hash_word(s, table_size)
 
-    # Double hashing
-    remainder = hash(s) % (len(hash_table) - 1)
-    second_index = 1 + remainder
+    # if empty
+    if hash_table[index] == "":
+        hash_table[index] = s
+        return
 
-    # Handle collision using double hashing
-    index = first_index
-    while hash_table[index] != "" and hash_table[index] != s:
-        index = (index + second_index) % len(hash_table)
+    # collision
+    step = step_size(s)
+    og_index = index
 
-    hash_table[index] = s
+    while True:
+        index = (index + step) % table_size
+
+        # alr in table
+        if hash_table[index] == s:
+            return
+
+        # empty
+        if hash_table[index] == "":
+            hash_table[index] = s
+            return
+
+        # stop
+        if index == og_index:
+            return
 
 
 # TO DO
@@ -112,18 +121,26 @@ def find_word(s, hash_table):
     pre: s is a string, and hash_table is a list representing the hash table.
     post: Returns True if s is found in hash_table, otherwise returns False.
     """
-    first_index = hash(s) % len(hash_table)
-    # Double hashing
-    remainder = hash(s) % (len(hash_table) - 1)
-    second_index = 1 + remainder
+    # variables
+    table_size = len(hash_table)
+    index = hash_word(s, table_size)
 
-    # Start checking from the calculated index
-    index = first_index
-    while hash_table[index] != "":
+    if hash_table[index] == s:
+        return True
+
+    step = step_size(s)
+    og_index= index
+
+    while True:
+        index = (index + step) % table_size
+
+        if hash_table[index] == "":
+            return False # empty slot
         if hash_table[index] == s:
             return True
-        index = (index + second_index) % len(hash_table)
-    return False
+        if index == og_index:
+            return False # not found
+
 
 
 # TO DO
@@ -137,28 +154,29 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    m = len(hash_table)  # Hash table size
-
-    # if the word is already reducible
-    s_hash = hash(s) % m
-
-    if hash_memo[s_hash] is not None:
-        return hash_memo[s_hash]
-
-    # If the word is in the table it's reducible
-    if s in hash_table:
-        hash_memo[s_hash] = True
+    # already in hash_memo
+    if s in hash_memo:
         return True
 
-    # check if the new word is reducible
-    for i in range(len(s)):
-        reduced_word = s[:i] + s[i+1:]
-        if is_reducible(reduced_word, hash_table, hash_memo):
-            hash_memo[s_hash] = True
-            return True
+    # Base case
+    if len(s) == 1 and s in {"a", "i", "o"}:
+        hash_memo.add(s)
+        return True
 
-    hash_memo[s_hash] = False
+    # all possible single-letter removals
+    for i in range(len(s)):
+        part_s = s[:i] + s[i+1:]
+
+        # Check if still a valid word
+        if part_s in hash_table:
+            if is_reducible(part_s, hash_table, hash_memo):
+                hash_memo.add(s)  # Mark as reducible
+                return True
+
+    # Word is not reducible
     return False
+
+
 
 # TO DO
 def get_longest_words(string_list):
@@ -201,7 +219,7 @@ def main():
     # the length of the word_list
     guess = 2 * len(word_list)
     while not is_prime(guess):
-        guess = guess + 1
+        guess += 1
     n = guess # prime
 
     # create an empty hash_list
@@ -209,8 +227,8 @@ def main():
     # hash each word in word_list into hash_list
     # for collisions use double hashing
     hash_list = [""] * n
-    for word in word_list:
-        insert_word(word, hash_list)
+    for s in word_list:
+        insert_word(s, hash_list)
 
     # create an empty hash_memo of size M
     # we do not know a priori how many words will be reducible
@@ -225,9 +243,9 @@ def main():
 
     # populate the hash_memo with M blank strings
     reducible_words = []
-    for word in word_list:
-        if is_reducible(word, hash_list, hash_memo):
-            reducible_words.append(word)
+    for s in word_list:
+        if is_reducible(s, hash_list, hash_memo):
+            reducible_words.append(s)
 
     # create an empty list reducible_words
      # for each word in the word_list recursively determine
@@ -243,8 +261,8 @@ def main():
     # one word per line
     ordered_words = sorted(longest_words)
 
-    for word in ordered_words:
-        print(word)
+    for s in ordered_words:
+        print(s)
 
 if __name__ == "__main__":
     main()
