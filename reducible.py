@@ -85,6 +85,10 @@ def insert_word(s, hash_table):
     table_size = len(hash_table)
     index = hash_word(s, table_size)
 
+    # check for duplicates
+    if hash_table[index] == s:
+        return
+
     # if empty
     if hash_table[index] == "":
         hash_table[index] = s
@@ -154,13 +158,13 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    # already in hash_memo
-    if s in hash_memo:
+    # first check this
+    if len(s) == 1 and s in {"a", "i", "o"}:
+        hash_memo[hash_table.index(s)] = s
         return True
 
-    # Base case
-    if len(s) == 1 and s in {"a", "i", "o"}:
-        hash_memo.add(s)
+    # already in hash_memo
+    if s in hash_memo:
         return True
 
     # all possible single-letter removals
@@ -170,7 +174,7 @@ def is_reducible(s, hash_table, hash_memo):
         # Check if still a valid word
         if part_s in hash_table:
             if is_reducible(part_s, hash_table, hash_memo):
-                hash_memo.add(s)  # Mark as reducible
+                hash_memo[hash_table.index(s)] = s
                 return True
 
     # Word is not reducible
