@@ -158,9 +158,16 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    # first check this
+    # checking size
+    if s in hash_table:
+        index = hash_table.index(s)
+        if index < len(hash_memo):
+            hash_memo[index] = s
+
+    # base case
     if len(s) == 1 and s in {"a", "i", "o"}:
-        hash_memo[hash_table.index(s)] = s
+        index = hash_table.index(s)
+        hash_memo[index] = s
         return True
 
     # already in hash_memo
@@ -169,13 +176,14 @@ def is_reducible(s, hash_table, hash_memo):
 
     # all possible single-letter removals
     for i in range(len(s)):
-        part_s = s[:i] + s[i+1:]
+        less_s = s[:i] + s[i+1:]
 
         # Check if still a valid word
-        if part_s in hash_table:
-            if is_reducible(part_s, hash_table, hash_memo):
-                hash_memo[hash_table.index(s)] = s
-                return True
+        if less_s in hash_table and is_reducible(less_s, hash_table, hash_memo):
+            # Mark s as reducible and store it
+            index = hash_table.index(s)
+            hash_memo[index] = s
+            return True
 
     # Word is not reducible
     return False
