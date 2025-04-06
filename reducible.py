@@ -70,10 +70,8 @@ def step_size(s):
         return 2
 
     # If the str length is divisible by 3
-    if length % 3 == 0:
+    if length % 3 == 0 or length % 7 == 0:
         return 3
-
-    # Default case
     return 1
 
 
@@ -87,18 +85,17 @@ def insert_word(s, hash_table):
     post: Inserts s into hash_table at the correct index; resolves any collisions
           by double hashing.
     """
-    # size of table
-    size = len(hash_table)
-    index = hash_word(s, size)
-    step = step_size(s)
+    first_index = hash(s) % len(hash_table)
 
-    # check empty spot or already there
-    while hash_table[index] != "":
-        if hash_table[index] == s:
-            return
-        index = (index + step) % size
-        if hash_table[index] == "":  # If an empty spot is found stop searching
-            break
+    # Double hashing
+    remainder = hash(s) % (len(hash_table) - 1)
+    second_index = 1 + remainder
+
+    # Handle collision using double hashing
+    index = first_index
+    while hash_table[index] != "" and hash_table[index] != s:
+        index = (index + second_index) % len(hash_table)
+
     hash_table[index] = s
 
 
@@ -112,21 +109,17 @@ def find_word(s, hash_table):
     pre: s is a string, and hash_table is a list representing the hash table.
     post: Returns True if s is found in hash_table, otherwise returns False.
     """
-    size = len(hash_table)
+    first_index = hash(s) % len(hash_table)
+    # Double hashing
+    remainder = hash(s) % (len(hash_table) - 1)
+    second_index = 1 + remainder
 
-    # starting index
-    index = hash_word(s, size)
-    step = step_size(s)
-    og_index = index
-
+    # Start checking from the calculated index
+    index = first_index
     while hash_table[index] != "":
         if hash_table[index] == s:
             return True
-        index = (index + step) % size
-
-        if index == og_index:  # If we've looped back to the og
-            break
-
+        index = (index + second_index) % len(hash_table)
     return False
 
 
@@ -141,27 +134,35 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    m = len(hash_table)  # Hash table size
+    # word alr seen
+    if s in hash_memo:
+        return hash_memo[s]
 
-    # if the word is already reducible
-    s_hash = hash(s) % m
-
-    if hash_memo[s_hash] is not None:
-        return hash_memo[s_hash]
-
-    # If the word is in the table it's reducible
-    if s in hash_table:
-        hash_memo[s_hash] = True
+    # already in the hash table
+    if find_word(s, hash_table):
+        hash_memo[s] = True
         return True
 
-    # check if the new word is reducible
+    # single letter words
+    if len(s) == 1:
+        hash_memo[s] = False
+        return False
+
+    # removing one letter at a time
     for i in range(len(s)):
         reduced_word = s[:i] + s[i+1:]
-        if is_reducible(reduced_word, hash_table, hash_memo):
-            hash_memo[s_hash] = True
+
+        # if it is reducible
+        check_word = find_word(reduced_word, hash_table)
+        reducible = is_reducible(reduced_word, hash_table, hash_memo)
+
+        if check_word and reducible:
+            # Memoize the result for the current word
+            hash_memo[reduced_word] = True
+            hash_memo[s] = True
             return True
 
-    hash_memo[s_hash] = False
+    hash_memo[s] = False
     return False
 
 # TO DO
