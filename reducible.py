@@ -139,17 +139,28 @@ def is_reducible(s, hash_table, hash_memo):
     post: Returns True if s is reducible (also updates hash_memo by
           inserting s if reducible), otherwise returns False.
     """
-    m = len(hash_memo)  # Size of the memo table
-    index = hash(s) % m
+    m = len(hash_table)  # Hash table size
 
-    if hash_table[index] != "":
-        pass
+    # if the word is already reducible
+    s_hash = hash(s) % m
 
-    if hash_memo[index] == "":  # If word hasn't been processed
-        hash_memo[index] = s
+    if hash_memo[s_hash] is not None:
+        return hash_memo[s_hash]
+
+    # If the word is in the table it's reducible
+    if s in hash_table:
+        hash_memo[s_hash] = True
         return True
 
-    return False  # Word already processed
+    # check if the new word is reducible
+    for i in range(len(s)):
+        reduced_word = s[:i] + s[i+1:]
+        if is_reducible(reduced_word, hash_table, hash_memo):
+            hash_memo[s_hash] = True
+            return True
+
+    hash_memo[s_hash] = False
+    return False
 
 # TO DO
 def get_longest_words(string_list):
@@ -182,13 +193,14 @@ def main():
     # should be a single word. Append to word_list
     # ensure each word has no trailing white space.
     word_list = []
-    line = input().strip()
-    while line != '':
-        print(line)
-        try:
+    try:
+        line = input().strip()
+        while line:
+            print(line)
+            word_list.append(line)
             line = input().strip()
-        except EOFError:
-            break
+    except EOFError:
+        pass
 
     # find length of word_list
     # determine prime number N that is greater than twice
@@ -214,7 +226,7 @@ def main():
     # let us assume it is 10 percent (fairly safe) of the words
     # then M is a prime number that is slightly greater than
     # 0.2 * size of word_list
-    m = (len(word_list) * 2) // 10 + 1
+    m = int(0.2 * len(word_list)) + 1
 
     while is_prime(m) is False:
         m += 1
